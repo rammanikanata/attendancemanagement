@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Attendance System</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 1.5rem;
+            color: #202124;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #5f6368;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: #1a73e8;
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1557b0;
+        }
+
+        .error {
+            color: #d93025;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="login-card">
+        <!-- Assuming logo exists at static/logos/logo.png as implied by prompt structure -->
+        <div class="logos" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 1rem;">
+            <img src="/static/logos/1.png" alt="Logo 1" style="height: 60px;">
+            <img src="/static/logos/2.jpg" alt="Logo 2" style="height: 60px;">
+        </div>
+        <h2>Admin Login</h2>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-primary">Sign In</button>
+        </form>
+    </div>
+    <br><br>
+    <footer class="site-footer">
+        &copy; ECE Events Attendance  | <a href="https://www.linkedin.com/in/ramamanikantaguna/" target="_blank"
+            style="color: #1a73e8; text-decoration: none;">Rama Manikanta</a>
+    </footer>
+</body>
+
+</html>

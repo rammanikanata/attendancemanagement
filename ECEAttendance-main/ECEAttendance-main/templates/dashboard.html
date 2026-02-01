@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logos" style="display: flex; gap: 10px; align-items: center; margin-right: 1rem;">
+                <img src="/static/logos/1.png" alt="Logo 1" class="logo" style="height: 50px;">
+                <img src="/static/logos/2.jpg" alt="Logo 2" class="logo" style="height: 50px;">
+            </div>
+            <h1>Attendance Dashboard</h1>
+            <div class="header-actions">
+                <select id="eventSelect" class="event-dropdown" onchange="handleEventChange()">
+                    <option value="">Select Event</option>
+                </select>
+                {% if session.get('username') == 'ECEADMIN' %}
+                <button onclick="openModal('manageEventsModal')" class="btn-secondary">Manage Events</button>
+                {% endif %}
+                <a href="/logout" class="btn-secondary">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-controls">
+            <div class="card scanner-card">
+                <h2>Scan QR Code</h2>
+                <div id="reader" width="600px"></div>
+                <div class="manual-entry">
+                    <input type="text" id="manualRollInput" placeholder="Enter Roll Number Manually">
+                    <button onclick="handleManualEntry()" class="btn-primary">Submit</button>
+                </div>
+                <div id="scanResult" class="scan-result"></div>
+            </div>
+
+            <div class="card stats-card">
+                <h2>Live Statistics</h2>
+                <div class="stats-row" style="display: flex; justify-content: space-around; margin-bottom: 1.5rem;">
+                    <div class="total-count">
+                        <h3>Registered</h3>
+                        <div id="totalStudents" class="count-number" style="color: #5f6368;">0</div>
+                    </div>
+                    <div class="total-count">
+                        <h3>Present Today</h3>
+                        <div id="totalCount" class="count-number">0</div>
+                    </div>
+                </div>
+                <div class="branch-grid" id="branchGrid">
+                    <!-- Branch counts will be populated here -->
+                </div>
+            </div>
+
+
+        </div>
+
+        <div id="deleteResult" class="scan-result"></div>
+        </div>
+        </div>
+
+        <div class="downloads-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Reports & Lists</h2>
+                <div style="display: flex; gap: 10px;">
+                    <a id="downloadExcelLink" href="#" class="btn-primary"
+                        style="background-color: #0F9D58; text-decoration: none; display: flex; align-items: center; justify-content: center;">Download
+                        Full Data</a>
+                    <button onclick="openViewListModal()" class="btn-primary" style="background-color: #202124;">View
+                        Attendees List</button>
+                </div>
+            </div>
+
+            <div class="buttons-grid" id="pdfButtonsGrid">
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="EEE">EEE</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="CSE">CSE</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="ECE">ECE</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="ECT">ECT</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="CAI">CAI</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="AIM">AIM</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="CSD">CSD</a>
+                <a href="#" class="btn-outline branch-pdf-btn" data-branch="CST">CST</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('addStudentModal')">&times;</span>
+            <h2>Add New Student</h2>
+            <p>Roll Number <strong id="modalRollNumber"></strong> not found.</p>
+            <p>Please enter the name to register and mark attendance.</p>
+            <input type="text" id="newStudentName" placeholder="Full Name" />
+            <button onclick="submitNewStudent()" class="btn-primary">Add & Mark Present</button>
+        </div>
+    </div>
+
+    <!-- View List Modal -->
+    <div id="viewListModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Attendees List</h2>
+                <span class="close-modal" onclick="closeModal('viewListModal')">&times;</span>
+            </div>
+
+            <div class="tabs"
+                style="margin-bottom: 1rem; border-bottom: 1px solid #dadce0; display: flex; gap: 1rem; overflow-x: auto;">
+                <button class="tab-btn active" onclick="filterList('ALL')">ALL</button>
+                <button class="tab-btn" onclick="filterList('EEE')">EEE</button>
+                <button class="tab-btn" onclick="filterList('CSE')">CSE</button>
+                <button class="tab-btn" onclick="filterList('ECE')">ECE</button>
+                <button class="tab-btn" onclick="filterList('ECT')">ECT</button>
+                <button class="tab-btn" onclick="filterList('CAI')">CAI</button>
+                <button class="tab-btn" onclick="filterList('AIM')">AIM</button>
+                <button class="tab-btn" onclick="filterList('CSD')">CSD</button>
+                <button class="tab-btn" onclick="filterList('CST')">CST</button>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 0.5rem;">
+                <a id="downloadCurrentPdf" href="#" class="btn-outline" style="font-size: 0.9rem;">Download PDF</a>
+            </div>
+
+            <div class="table-container">
+                <table id="attendeesTable" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f1f3f4; text-align: left;">
+                            <th style="padding: 0.5rem; border-bottom: 1px solid #dadce0;">S.No</th>
+                            <th style="padding: 0.5rem; border-bottom: 1px solid #dadce0;">Roll Number</th>
+                            <th style="padding: 0.5rem; border-bottom: 1px solid #dadce0;">Name</th>
+                            <th style="padding: 0.5rem; border-bottom: 1px solid #dadce0;">Branch</th>
+                            <th style="padding: 0.5rem; border-bottom: 1px solid #dadce0;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendeesTableBody">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Events Modal -->
+    <div id="manageEventsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('manageEventsModal')">&times;</span>
+            <h2>Manage Events</h2>
+
+            <div class="event-creation"
+                style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                <h3>Create New Event</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newEventName" placeholder="Event Name (e.g. ECE Workshop)"
+                        style="flex: 1;" />
+                    <button onclick="createNewEvent()" class="btn-primary">Create</button>
+                </div>
+            </div>
+
+            <div class="excel-upload" style="margin-bottom: 1rem;">
+                <h3>Upload Student List (Excel)</h3>
+                <p style="font-size: 0.9rem; color: #666;">Select an event first, then upload an Excel file with
+                    'Roll Number', 'Name', and optionally 'Branch'.</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <select id="uploadEventSelect" style="padding: 8px; border-radius: 4px; border: 1px solid #dadce0;">
+                        <option value="">-- Select Event for Upload --</option>
+                    </select>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="padding: 5px;" />
+                    <button onclick="handleExcelUpload()" class="btn-primary" style="background-color: #0F9D58;">Upload
+                        & Register Students</button>
+                </div>
+                <div id="uploadStatus" style="margin-top: 10px; font-weight: 500;"></div>
+            </div>
+
+            <div class="event-list-section" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                <h3>Remove Event</h3>
+                <p style="font-size: 0.85rem; color: #d93025; margin-bottom: 0.5rem;">
+                    <strong>CAUTION:</strong> This will permanently delete the event and all associated
+                    student/attendance data.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <select id="deleteEventSelect" style="padding: 8px; border-radius: 4px; border: 1px solid #dadce0;">
+                        <option value="">-- Select Event to Remove --</option>
+                    </select>
+                    <input type="text" id="deleteEventConfirmName" placeholder="Type Event Name Exactly to Confirm"
+                        style="padding: 8px; border-radius: 4px; border: 1px solid #dadce0;" />
+                    <button onclick="handleRemoveEventButtonClick()" class="btn-primary"
+                        style="background-color: #d93025;">Remove Event Permanently</button>
+                </div>
+            </div>
+
+            <div class="admin-management-section"
+                style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                <h3>Manage Admins</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="newAdminUser" placeholder="New Admin Username"
+                        style="flex: 1; padding: 5px;" />
+                    <input type="password" id="newAdminPass" placeholder="Password" style="flex: 1; padding: 5px;" />
+                    <button onclick="createNewAdmin()" class="btn-primary"
+                        style="background-color: #4285F4;">Add</button>
+                </div>
+                <div id="modalAdminList"
+                    style="max-height: 150px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 4px; padding: 5px;">
+                    <!-- Admin list with delete buttons will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = "{{ session.get('username') }}";
+    </script>
+    <script src="/static/js/main.js"></script>
+    <br><br>
+    <footer class="site-footer">
+        &copy; ECE Events Attendance  | <a href="https://www.linkedin.com/in/ramamanikantaguna/" target="_blank"
+            style="color: #1a73e8; text-decoration: none;">Rama Manikanta</a>
+    </footer>
+</body>
+
+</html>
